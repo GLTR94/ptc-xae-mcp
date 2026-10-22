@@ -1,0 +1,49 @@
+# Build output
+bin/
+obj/
+artifacts/
+
+# Test output
+TestResults/
+**/TestResults/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# .NET SDK local files
+.dotnet/
+
+# NuGet
+*.nuget.props
+*.nuget.targets
+project.assets.json
+project.nuget.cache
+
+# OS
+Thumbs.db
+desktop.ini
+
+# Runtime output from twincat_get_mapping_info
+Mappings.xml
+
+# Activity-log mirror (PTC_XAE_MCP_REPORTS_MIRROR=1)
+reports/
+
+# Installer build output
+setup/publish/
+setup/dist/
+*.log
+
+# Python bytecode caches
+__pycache__/
+
+# Personal AI-assistant files and working notes: local only, never part of this repository
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.mcp.json
+WORKFLOW.md
+docs/plans/
+docs/specs/

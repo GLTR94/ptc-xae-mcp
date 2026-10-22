@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "sourcePdf": "test-fixture.pdf",
+    "generatedAt": "2026-05-12T08:00:00+00:00",
+    "schemaVersion": "1.0",
+    "stats": {
+      "spsRowCount": 4,
+      "exportedIoPoints": 4
+    },
+    "debug": {
+      "topologyView": "EK1200-5000 > EL1809, EL2809",
+      "warnings": []
+    }
+  },
+  "twincat": {
+    "deviceName": "Gerät 1 (EtherCAT)",
+    "plcProjectName": "PLC",
+    "gvlName": "IO_Generated",
+    "linking": {
+      "enabled": true,
+      "failIfUnresolved": true
+    },
+    "export": {
+      "xtiPath": "",
+      "mappingCsvPath": ""
+    }
+  },
+  "ethercat": {
+    "root": {
+      "name": "A1.00 (EK1200-5000)",
+      "vInfo": "EK1200-5000",
+      "children": [
+        { "name": "A1.05 (EL1809)", "vInfo": "EL1809" },
+        { "name": "A1.11 (EL2809)", "vInfo": "EL2809" }
+      ]
+    }
+  },
+  "ioPoints": [
+    { "terminalName": "A1.05 (EL1809)", "channel": 1, "direction": "I", "type": "BOOL", "varName": "I_Test_Input_1", "group": "+01", "description": "Test Input 1" },
+    { "terminalName": "A1.05 (EL1809)", "channel": 2, "direction": "I", "type": "BOOL", "varName": "I_Test_Input_2", "group": "+01", "description": "Test Input 2" },
+    { "terminalName": "A1.11 (EL2809)", "channel": 1, "direction": "Q", "type": "BOOL", "varName": "Q_Test_Output_1", "group": "+01", "description": "Test Output 1" },
+    { "terminalName": "A1.11 (EL2809)", "channel": 2, "direction": "Q", "type": "BOOL", "varName": "Q_Test_Output_2", "group": "+01", "description": "Test Output 2" }
+  ]
+}

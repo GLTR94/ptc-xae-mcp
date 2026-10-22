@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <GVL Name="GVL_InstanceSettings" Id="{184db6c9-40f4-428a-a0b5-e23605205657}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	{attribute 'TcInitSymbol'}
+	nInitParam : DINT := 10;
+	{attribute 'TcInitSymbol'}
+	fInitGain : LREAL := 1.5;
+END_VAR
+VAR_GLOBAL RETAIN
+	nRetainCounter : UDINT;
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

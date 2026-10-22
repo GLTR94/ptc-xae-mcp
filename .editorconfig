@@ -1,0 +1,50 @@
+root = true
+
+[*]
+indent_style = space
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.cs]
+indent_size = 4
+end_of_line = crlf
+charset = utf-8
+# NOT utf-8-bom: the codebase's .cs files are UTF-8 without BOM (issue #157 item 6).
+# .csproj/.sln/.json files still commonly carry a BOM in this repo and are left alone —
+# this section only governs *.cs.
+
+# File-scoped namespaces everywhere in this codebase (namespace X; not namespace X { }).
+csharp_style_namespace_declarations = file_scoped:warning
+
+# var when the right-hand side already makes the type obvious (var x = new Foo(), var x =
+# Method()); explicit type for literals/primitives and anything read from an API whose
+# return type isn't visible at the call site. Matches the codebase's existing mix rather
+# than forcing one extreme.
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# One statement/declaration per line; braces on their own line (Allman), already the
+# codebase's dominant style outside a handful of deliberately terse one-liners (e.g.
+# GoToDialogAutomation.cs's TextOf/ClassOf helpers).
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# Modifiers order, expression-bodied members: light-touch, non-fatal suggestions only —
+# this pass is about *reporting* the analyzer inventory (Directory.Build.props), not
+# rewriting the codebase to a stricter style than it already has.
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:suggestion
+csharp_prefer_braces = true:suggestion
+
+# Nullable reference types are on solution-wide (Directory.Build.props); prefer the
+# pattern-based null checks already used throughout (is null / is not null) over ==/!=.
+csharp_style_prefer_pattern_matching = true:suggestion
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+
+[*.{json,csproj,sln}]
+end_of_line = crlf
+
+[*.md]
+trim_trailing_whitespace = false

@@ -1,0 +1,211 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>ptc-xae-mcp</AssemblyName>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
+    <!-- open-object: the sysman node-select route drives the TcXaeShell Solution-Explorer
+         tree via in-box UIAutomation (System.Windows.Automation), which ships in the WPF
+         set of Microsoft.WindowsDesktop.App. UseWPF brings UIAutomationClient/Types in
+         without any NuGet/third-party dependency. -->
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- UseWPF drops System.IO / System.Net.Http from the implicit-usings set (WPF avoids
+       the System.IO.Path vs System.Windows.Shapes.Path collision). No file here imports
+       System.Windows.Shapes, so restore the two base-set namespaces the project relied on
+       implicitly before UseWPF was enabled. -->
+  <ItemGroup>
+    <Using Include="System.IO" />
+    <Using Include="System.Net.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.4.1" />
+    <!-- ads-variable-rw: managed ADS client, compiles on CI, P/Invoke only at runtime -->
+    <PackageReference Include="Beckhoff.TwinCAT.Ads" Version="7.0.389" />
+    <!-- coredump-analysis: SQLite reader for offline LoggedEvents.db.
+         Use .Core + bundle_winsqlite3 to avoid GHSA-2m69-gcr7-jv3q in lib.e_sqlite3. -->
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.21" />
+    <PackageReference Include="SQLitePCLRaw.bundle_winsqlite3" Version="2.1.11" />
+  </ItemGroup>
+
+  <!-- ci-twincat-compile-seams (issue #47). The TwinCAT COM partials
+       (TwinCatComSession.Scope.cs / .EventLogger.cs) reference proprietary
+       Beckhoff DLLs that only exist on a machine with TwinCAT XAE installed.
+       Hosted CI has none, so without a seam the whole solution (incl. the unit
+       test project, which ProjectReferences this one) fails to compile and CI
+       carries no signal.
+
+       $(TwinCat) auto-detects from the Measurement AI DLL's presence; it can
+       be forced either way with -p:TwinCat=true|false. When true, the TWINCAT
+       compile constant is defined and the Beckhoff references are included, and
+       the #if TWINCAT bodies in the Scope/EventLogger partials compile exactly
+       as before. When false (hosted CI), the references are dropped and those
+       partials fall back to PlatformNotSupportedException stubs, so the
+       non-COM majority + unit suite build and run as a real gate. -->
+  <PropertyGroup>
+    <MeasurementAiPath>C:\Program Files (x86)\Beckhoff\TwinCAT\Functions\TE130x-Scope-View\TwinCAT.Measurement.AutomationInterface.dll</MeasurementAiPath>
+    <TwinCat Condition="'$(TwinCat)'=='' and Exists('$(MeasurementAiPath)')">true</TwinCat>
+    <TwinCat Condition="'$(TwinCat)'==''">false</TwinCat>
+    <DefineConstants Condition="'$(TwinCat)'=='true'">$(DefineConstants);TWINCAT</DefineConstants>
+  </PropertyGroup>
+
+  <!-- TwinCAT Scope (TE130X) Automation Interface. IMeasurementScope.CreateChild/
+       LookUpChild are custom (vtable) interface methods that late-bound IDispatch
+       cannot resolve (DISP_E_UNKNOWNNAME) — early binding via this interop
+       assembly is required (Infosys 498477707). EmbedInteropTypes: ComImport
+       interface-only assembly, no runtime dependency on the Beckhoff dir. -->
+  <ItemGroup Condition="'$(TwinCat)'=='true'">
+    <Reference Include="TwinCAT.Measurement.AutomationInterface">
+      <HintPath>$(MeasurementAiPath)</HintPath>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </Reference>
+  </ItemGroup>
+
+  <!-- hmi-server: TwinCAT HMI (TE2000) Automation Interface. TcHmiAutomation.dll is a
+       managed .NET-Framework assembly with [ComVisible] interfaces (NOT a ComImport interop
+       assembly like the Scope AI), so it cannot be embedded: it is referenced and copied
+       next to the exe. Early binding is required — verified live 2026-09-25: over IDispatch
+       an interface exposes only its OWN members (ITcHmiItem.Name, ITcHmiError.LastError
+       unreachable from ITcHmiProject/ITcHmiServer) and overloads bind wrongly, while the
+       typed cast from this net10 x64 process works out-of-proc against TcXaeShell64.
+       $(TcHmi) auto-detects the DLL (TE2000 installed) and requires $(TwinCat); force with
+       -p:TcHmi=true|false. When false, TwinCatComSession.Hmi.cs compiles to honest stubs.
+       envdte: TcHmiAutomation's overloads take EnvDTE.Project, so the compiler needs the
+       EnvDTE assembly for overload resolution (envdte80 alone does not supply it).
+
+       TcHmiAutomation.dll is proprietary Beckhoff software (TE2000) and is NOT redistributed:
+       like the EventLogger interop below it is Private=$(BundleBeckhoffDlls) — compile-time
+       reference only by default, resolved at runtime from the local TE2000 installation by
+       BeckhoffAssemblyResolver (TwinCatPaths.GetHmiAutomationDirCandidates). Build with
+       -p:BundleBeckhoffDlls=true to copy it next to the exe again. -->
+  <PropertyGroup>
+    <TcHmiAutomationPath>C:\Program Files (x86)\Beckhoff\TwinCAT\Functions\TE2000-HMI-Engineering\bin\TcHmiAutomation.dll</TcHmiAutomationPath>
+    <TcHmi Condition="'$(TcHmi)'=='' and '$(TwinCat)'=='true' and Exists('$(TcHmiAutomationPath)')">true</TcHmi>
+    <TcHmi Condition="'$(TcHmi)'==''">false</TcHmi>
+    <DefineConstants Condition="'$(TcHmi)'=='true'">$(DefineConstants);TCHMI</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TcHmi)'=='true'">
+    <Reference Include="TcHmiAutomation">
+      <HintPath>$(TcHmiAutomationPath)</HintPath>
+      <Private>$(BundleBeckhoffDlls)</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- EnvDTE / EnvDTE80 (issue #3). The Microsoft interop assemblies are licensed for use
+       with Visual Studio only and must not ship with this product. Every XAE machine already
+       has them in a TcXaeShell PublicAssemblies directory, and there are two shells:
+         - 32-bit XAE  (Program Files (x86)\Beckhoff\TcXaeShell): envdte/envdte80 8.0.0.0 +
+           stdole 7.0 - full PIAs, the same EnvDTE 8.0.0.0 TcHmiAutomation.dll references;
+         - 64-bit shell (Program Files\Beckhoff\TcXaeShell): envdte/envdte80/stdole 17.0 as
+           facades over Microsoft.VisualStudio.Interop 17.0.
+       The build compiles against the 32-bit shell's 8.0 PIAs when present (the lowest version,
+       so the binary runs against either shell), otherwise against the 64-bit shell's copies.
+       Referenced at compile time only (Private=false); BeckhoffAssemblyResolver loads them at
+       runtime (TwinCatPaths.GetXaeShellPublicAssembliesDirCandidates, 64-bit shell first).
+
+       Fallback for machines without TcXaeShell (hosted CI): the envdte/envdte80 17.x NuGet
+       facades, so the solution and the unit suite still build and run. That output is never
+       released; setup\build-installer.ps1 refuses a publish folder with any envdte*, stdole*
+       or Microsoft.VisualStudio.* file. -->
+  <PropertyGroup>
+    <XaeShellPublicAssembliesDir Condition="'$(XaeShellPublicAssembliesDir)'=='' and Exists('$(MSBuildProgramFiles32)\Beckhoff\TcXaeShell\Common7\IDE\PublicAssemblies\envdte80.dll')">$(MSBuildProgramFiles32)\Beckhoff\TcXaeShell\Common7\IDE\PublicAssemblies</XaeShellPublicAssembliesDir>
+    <XaeShellPublicAssembliesDir Condition="'$(XaeShellPublicAssembliesDir)'=='' and Exists('$(ProgramW6432)\Beckhoff\TcXaeShell\Common7\IDE\PublicAssemblies\envdte80.dll')">$(ProgramW6432)\Beckhoff\TcXaeShell\Common7\IDE\PublicAssemblies</XaeShellPublicAssembliesDir>
+    <EnvDteFromXaeShell Condition="'$(EnvDteFromXaeShell)'=='' and '$(XaeShellPublicAssembliesDir)'!='' and Exists('$(XaeShellPublicAssembliesDir)\envdte.dll') and Exists('$(XaeShellPublicAssembliesDir)\envdte80.dll')">true</EnvDteFromXaeShell>
+    <EnvDteFromXaeShell Condition="'$(EnvDteFromXaeShell)'==''">false</EnvDteFromXaeShell>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(EnvDteFromXaeShell)'=='true'">
+    <Reference Include="EnvDTE">
+      <HintPath>$(XaeShellPublicAssembliesDir)\envdte.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="EnvDTE80">
+      <HintPath>$(XaeShellPublicAssembliesDir)\envdte80.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="stdole">
+      <HintPath>$(XaeShellPublicAssembliesDir)\stdole.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- 64-bit shell only: its envdte/envdte80 forward their types here. -->
+    <Reference Include="Microsoft.VisualStudio.Interop" Condition="Exists('$(XaeShellPublicAssembliesDir)\Microsoft.VisualStudio.Interop.dll')">
+      <HintPath>$(XaeShellPublicAssembliesDir)\Microsoft.VisualStudio.Interop.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(EnvDteFromXaeShell)'!='true'">
+    <PackageReference Include="envdte" Version="17.14.40260" />
+    <PackageReference Include="envdte80" Version="17.14.40260" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="port-labels.json" CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- Sample project (issue #273): the neutral fixture ships under Sample\PtcXaeMcpFixture\ next to
+         the exe (build output AND dotnet publish, which build-installer.ps1 uses; the installer takes
+         the whole publish folder). "Open sample project" copies it to Documents - the shipped copy is
+         never opened in place. XAE-generated folders/files are not part of the sources. -->
+    <Content Include="..\..\tests\Fixtures\PtcXaeMcpFixture\**\*"
+             Exclude="..\..\tests\Fixtures\PtcXaeMcpFixture\**\.vs\**;..\..\tests\Fixtures\PtcXaeMcpFixture\**\_Boot\**;..\..\tests\Fixtures\PtcXaeMcpFixture\**\_CompileInfo\**;..\..\tests\Fixtures\PtcXaeMcpFixture\**\_Libraries\**;..\..\tests\Fixtures\PtcXaeMcpFixture\**\*.bak;..\..\tests\Fixtures\PtcXaeMcpFixture\**\*.~u;..\..\tests\Fixtures\PtcXaeMcpFixture\**\*.tclrs;..\..\tests\Fixtures\PtcXaeMcpFixture\**\*.tpy;..\..\tests\Fixtures\PtcXaeMcpFixture\**\*.compileinfo;..\..\tests\Fixtures\PtcXaeMcpFixture\**\LineIDs.dbg;..\..\tests\Fixtures\PtcXaeMcpFixture\**\*.suo;..\..\tests\Fixtures\PtcXaeMcpFixture\**\*.user;..\..\tests\Fixtures\PtcXaeMcpFixture\**\*.orig;..\..\tests\Fixtures\PtcXaeMcpFixture\**\.gitignore"
+             Link="Sample\PtcXaeMcpFixture\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Header logo (issue #270): one embedded file instead of a bitmap serialized into
+       Form1.resx. The LogicalName is fixed so ProductInfo.LoadLogo does not depend on the
+       root namespace the SDK derives from the assembly name. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\logo.png" LogicalName="PtcXaeMcp.WinForms.Assets.logo.png" />
+  </ItemGroup>
+
+  <!-- xae-event-logger: TC3 EventLogger ADS proxy (managed interop, no VS dep).
+       Legacy COM TcEventLoggerAdsProxyLib is NOT registered on 4026.22 boxes,
+       so we reference the assembly shipped with TwinCAT directly. The newest
+       version dir present is picked. The native TcEventLoggerAdsProxy.dll is
+       NOT on the loader search path on 4026.22 boxes (the TwinCAT setup does
+       not add the TcEventloggerV2 dir to PATH), so the managed interop's
+       P/Invoke fails at runtime with 0x8007007E (issue #43). We copy the
+       native DLL next to the host exe so the loader resolves it from the app
+       base dir; its own deps (TcAdsDll, …) live in Common64 which IS on PATH.
+
+       Neither DLL is Pneutronic's to redistribute — both are proprietary
+       Beckhoff components (#156 item 4, THIRD-PARTY-NOTICES.md); the same
+       applies to TcHmiAutomation.dll above. By default
+       (BundleBeckhoffDlls unset/false) they are referenced at compile time
+       only (Private=false — not copied to the output/publish/installer
+       tree) and resolved at *runtime* from the local TwinCAT installation by
+       BeckhoffAssemblyResolver.Register() (TwinCat/BeckhoffAssemblyResolver.cs),
+       which probes the same TcEventloggerV2 version directories via the
+       registry (HKLM\SOFTWARE\WOW6432Node\Beckhoff\TwinCAT3\InstallDir) or
+       %TwinCAT3Dir%. Build with -p:BundleBeckhoffDlls=true to restore the
+       old behavior (copy both DLLs into the output/installer) for a
+       redistribution model that has been separately cleared — this must be
+       verified live: the resolver has not been exercised against a running
+       TC3 EventLogger with BundleBeckhoffDlls left at its default. -->
+  <PropertyGroup>
+    <BundleBeckhoffDlls Condition="'$(BundleBeckhoffDlls)'==''">false</BundleBeckhoffDlls>
+    <TcEventLoggerDir Condition="'$(TcEventLoggerDir)'=='' and Exists('$(ProgramFiles) (x86)\Beckhoff\TwinCAT\3.1\Components\TcEventloggerV2\v170')">$(ProgramFiles) (x86)\Beckhoff\TwinCAT\3.1\Components\TcEventloggerV2\v170</TcEventLoggerDir>
+    <TcEventLoggerDir Condition="'$(TcEventLoggerDir)'=='' and Exists('$(ProgramFiles) (x86)\Beckhoff\TwinCAT\3.1\Components\TcEventloggerV2\v160')">$(ProgramFiles) (x86)\Beckhoff\TwinCAT\3.1\Components\TcEventloggerV2\v160</TcEventLoggerDir>
+    <TcEventLoggerDir Condition="'$(TcEventLoggerDir)'=='' and Exists('$(ProgramFiles) (x86)\Beckhoff\TwinCAT\3.1\Components\TcEventloggerV2\v150')">$(ProgramFiles) (x86)\Beckhoff\TwinCAT\3.1\Components\TcEventloggerV2\v150</TcEventLoggerDir>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TwinCat)'=='true' and '$(TcEventLoggerDir)'!=''">
+    <Reference Include="Beckhoff.TwinCAT.TcEventLoggerAdsProxy.Native.Interop">
+      <HintPath>$(TcEventLoggerDir)\Beckhoff.TwinCAT.TcEventLoggerAdsProxy.Native.Interop.dll</HintPath>
+      <Private>$(BundleBeckhoffDlls)</Private>
+    </Reference>
+    <None Include="$(TcEventLoggerDir)\TcEventLoggerAdsProxy.dll" Link="TcEventLoggerAdsProxy.dll" Condition="'$(BundleBeckhoffDlls)'=='true' and Exists('$(TcEventLoggerDir)\TcEventLoggerAdsProxy.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

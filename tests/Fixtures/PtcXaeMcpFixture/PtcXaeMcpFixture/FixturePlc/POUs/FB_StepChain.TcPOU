@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_StepChain" Id="{202c955b-710b-491e-a938-f664778f1776}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_StepChain
+VAR_INPUT
+	bStart : BOOL;
+END_VAR
+VAR
+	Step : INT;
+	tonWait : TON;
+	nRuns : UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE Step OF
+	0: // idle
+		IF bStart THEN
+			Step := 10;
+		END_IF
+
+	10: // wait a moment
+		tonWait(IN := TRUE, PT := T#100MS);
+		IF tonWait.Q THEN
+			tonWait(IN := FALSE);
+			Step := 1010;
+		END_IF
+
+	// 20: commented-out step, must never match
+
+	1010: // work
+		nRuns := nRuns + 1;
+		Step := 1020;
+
+	1020, 1030: // finish
+		Step := 0;
+
+ELSE
+	Step := 0;
+END_CASE
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

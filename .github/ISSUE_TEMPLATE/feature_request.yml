@@ -1,0 +1,25 @@
+name: Feature request
+description: A new tool, a new parameter or a behaviour change
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: The engineering task, not the tool. What do you do by hand in the XAE today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed tool or change
+      description: Name, parameters, result. Say which Automation Interface call or XAE dialog it maps to if you know.
+  - type: input
+    id: twincat
+    attributes:
+      label: TwinCAT XAE build you would test it on
+      placeholder: "3.1.4026.22"
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered

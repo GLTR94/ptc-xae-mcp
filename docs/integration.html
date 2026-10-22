@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pneutronic XAE MCP — Integrationsanleitung</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.6;
+  color: #222;
+  background: #fff;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
+}
+
+/* ── Brand ────────────────────────────────────────────────────── */
+:root {
+  --blue:   #0057a8;
+  --blue2:  #003e7e;
+  --accent: #e8f0fb;
+  --border: #ccd9ee;
+  --code:   #f4f6fa;
+  --ok:     #1a7f3c;
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 3px solid var(--blue);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.logo-block .product { font-size: 1.55rem; font-weight: 700; color: var(--blue); letter-spacing: -.5px; }
+.logo-block .sub     { font-size: .9rem; color: #555; margin-top: .1rem; }
+.meta { text-align: right; font-size: .82rem; color: #777; }
+
+/* ── TOC ──────────────────────────────────────────────────────── */
+.toc {
+  background: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.4rem;
+  margin-bottom: 2.5rem;
+  font-size: .92rem;
+}
+.toc h2 { font-size: .95rem; color: var(--blue2); margin-bottom: .5rem; text-transform: uppercase; letter-spacing: .05em; }
+.toc ol  { margin-left: 1.2rem; }
+.toc li  { margin: .2rem 0; }
+.toc a   { color: var(--blue); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+/* ── Section ──────────────────────────────────────────────────── */
+section { margin-bottom: 3rem; }
+section + section { border-top: 1px solid #e4e8f0; padding-top: 2.5rem; }
+
+h1 { font-size: 1.55rem; color: var(--blue); margin-bottom: .3rem; }
+h2 {
+  font-size: 1.2rem;
+  color: var(--blue2);
+  margin: 1.8rem 0 .6rem;
+  padding-left: .6rem;
+  border-left: 4px solid var(--blue);
+}
+h3 { font-size: 1rem; color: #333; margin: 1.3rem 0 .4rem; font-weight: 600; }
+p  { margin: .5rem 0 .8rem; }
+
+/* ── Section header bar ───────────────────────────────────────── */
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  background: var(--blue);
+  color: #fff;
+  border-radius: 6px 6px 0 0;
+  padding: .7rem 1rem;
+  margin-bottom: 1rem;
+}
+.section-heading .num {
+  background: rgba(255,255,255,.25);
+  border-radius: 50%;
+  width: 1.8rem; height: 1.8rem;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1rem; flex-shrink: 0;
+}
+.section-heading h1 { color: #fff; margin: 0; font-size: 1.2rem; }
+
+/* ── Badge ────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-size: .75rem;
+  font-weight: 600;
+  border-radius: 3px;
+  padding: .1rem .45rem;
+  vertical-align: middle;
+  margin-left: .3rem;
+}
+.badge-easy   { background: #d4edda; color: #155724; }
+.badge-med    { background: #fff3cd; color: #856404; }
+.badge-hard   { background: #f8d7da; color: #721c24; }
+
+/* ── Steps ────────────────────────────────────────────────────── */
+.steps { counter-reset: step; list-style: none; margin: .5rem 0 1rem; }
+.steps li {
+  counter-increment: step;
+  display: flex;
+  gap: .8rem;
+  margin-bottom: .6rem;
+  align-items: flex-start;
+}
+.steps li::before {
+  content: counter(step);
+  background: var(--blue);
+  color: #fff;
+  border-radius: 50%;
+  min-width: 1.5rem; height: 1.5rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; font-weight: 700; flex-shrink: 0;
+  margin-top: .1rem;
+}
+
+/* ── Code ─────────────────────────────────────────────────────── */
+pre {
+  background: var(--code);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: .8rem 1rem;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: .85rem;
+  overflow-x: auto;
+  margin: .5rem 0 1rem;
+}
+code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: .88em;
+  background: var(--code);
+  border: 1px solid #dde3ef;
+  border-radius: 3px;
+  padding: .1rem .35rem;
+}
+pre code { background: none; border: none; padding: 0; font-size: inherit; }
+
+/* ── Table ────────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; margin: .5rem 0 1rem; font-size: .92rem; }
+th, td { border: 1px solid var(--border); padding: .45rem .7rem; text-align: left; }
+th { background: var(--accent); font-weight: 600; color: var(--blue2); }
+tr:nth-child(even) td { background: #fafbff; }
+
+/* ── Callout ──────────────────────────────────────────────────── */
+.callout {
+  border-left: 4px solid var(--blue);
+  background: var(--accent);
+  border-radius: 0 5px 5px 0;
+  padding: .6rem 1rem;
+  margin: .8rem 0 1.2rem;
+  font-size: .92rem;
+}
+.callout.warn  { border-color: #e8a000; background: #fff8e6; }
+.callout.ok    { border-color: var(--ok); background: #eafaf1; }
+.callout strong { display: block; margin-bottom: .2rem; }
+
+/* ── Summary table ────────────────────────────────────────────── */
+.summary-table td:first-child { font-weight: 600; }
+.rec-yes  { color: var(--ok);   font-weight: 700; }
+.rec-warn { color: #b86e00;     font-weight: 700; }
+.rec-no   { color: #c00;        font-weight: 700; }
+
+/* ── Footer ───────────────────────────────────────────────────── */
+footer {
+  margin-top: 3rem;
+  border-top: 1px solid #ddd;
+  padding-top: 1rem;
+  font-size: .8rem;
+  color: #888;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── Print / PDF ──────────────────────────────────────────────── */
+@media print {
+  body { max-width: 100%; padding: 0; font-size: 9.5pt; }
+  a    { color: inherit; text-decoration: none; }
+  pre  { white-space: pre-wrap; word-break: break-all; }
+  .page-break { page-break-before: always; }
+  .no-print   { display: none; }
+  section + section { border-top: none; }
+  .toc { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════════════════════ -->
+<header>
+  <div class="logo-block">
+    <div class="product">Pneutronic XAE MCP</div>
+    <div class="sub">TwinCAT XAE — AI Integration Guide</div>
+  </div>
+  <div class="meta">
+    Pneutronic AG<br>
+    Version 1.0 · 2026
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TOC
+═══════════════════════════════════════════════════════════════ -->
+<nav class="toc no-print">
+  <h2>Inhalt</h2>
+  <ol>
+    <li><a href="#install">Installation &amp; Setup</a></li>
+    <li><a href="#claudedesktop">Claude Desktop (Windows-App)</a></li>
+    <li><a href="#claudecode">Claude Code (CLI, ohne IDE)</a></li>
+    <li><a href="#claudecode-vscode">Claude Code in VS Code</a></li>
+    <li><a href="#claude-xae">Claude in TwinCAT XAE</a></li>
+    <li><a href="#copilot-xae">GitHub Copilot in TwinCAT XAE Shell</a></li>
+    <li><a href="#copilot-vscode">GitHub Copilot in VS Code</a></li>
+    <li><a href="#hinweise">Gemeinsame Hinweise</a></li>
+  </ol>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     0 · INSTALLATION
+═══════════════════════════════════════════════════════════════ -->
+<section id="install">
+  <div class="section-heading">
+    <div class="num">0</div>
+    <h1>Installation &amp; Ersteinrichtung</h1>
+  </div>
+
+  <h2>Setup-Programm ausführen</h2>
+  <p>Der Setup-Assistent installiert Pneutronic XAE MCP.</p>
+
+  <ol class="steps">
+    <li>Installationsdatei <code>ptc-xae-mcp-setup-*.exe</code> herunterladen bzw. selbst bauen (siehe README).</li>
+    <li>Doppelklick auf die Installationsdatei → <em>Benutzerkontensteuerung</em> mit <strong>Ja</strong> bestätigen (Admin-Rechte nötig).</li>
+    <li>Installationsassistenten folgen.</li>
+    <li>Installation abschliessen — der MCP-Server wird unter <code>C:\Program Files\Pneutronic\ptc-xae-mcp\</code> installiert.</li>
+  </ol>
+
+  <h2>MCP-Server starten</h2>
+  <p>Der Server muss laufen, bevor ein AI-Client verbunden werden kann. Es gibt zwei Wege:</p>
+
+  <h3>Manuell</h3>
+  <pre>ptc-xae-mcp.exe --http-server</pre>
+  <p>Das Fenster bleibt offen. Der Server hört auf <code>http://localhost:5010/</code>.</p>
+
+  <h3>Automatisch beim Windows-Start</h3>
+  <ol class="steps">
+    <li><code>Win+R</code> → <code>shell:startup</code> eingeben → Enter.</li>
+    <li>Im geöffneten Ordner: Rechtsklick → <em>Neu → Verknüpfung</em>.</li>
+    <li>Pfad: <code>"C:\Program Files\Pneutronic\ptc-xae-mcp\ptc-xae-mcp.exe" --http-server</code></li>
+    <li>Name: <code>Pneutronic XAE MCP</code> → Fertig stellen.</li>
+  </ol>
+
+  <h2>Verbindung prüfen</h2>
+  <p>Browser öffnen und folgende Adresse aufrufen:</p>
+  <pre>http://localhost:5010/</pre>
+  <div class="callout ok"><strong>Erwartete Antwort</strong> <code>{"status":"ok"}</code> — Server läuft korrekt.</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     1 · CLAUDE DESKTOP
+═══════════════════════════════════════════════════════════════ -->
+<section id="claudedesktop" class="page-break">
+  <div class="section-heading">
+    <div class="num">1</div>
+    <h1>Claude Desktop (Windows-App) <span class="badge badge-easy">Einfach</span></h1>
+  </div>
+
+  <p>Claude Desktop ist die offizielle Windows-Anwendung von Anthropic und unterstützt MCP-Server nativ. Es ist die einfachste Integration ohne jede Kommandozeile.</p>
+
+  <h2>Voraussetzungen</h2>
+  <table>
+    <tr><th>Komponente</th><th>Anforderung</th></tr>
+    <tr><td>Claude Desktop</td><td>Windows 10/11, aktuelle Version</td></tr>
+    <tr><td>Anthropic-Konto</td><td>https://claude.ai — kostenlos oder Pro</td></tr>
+  </table>
+
+  <h2>Installation</h2>
+  <ol class="steps">
+    <li>Claude Desktop herunterladen: <strong>https://claude.ai/download</strong> → Windows.</li>
+    <li>Installer ausführen und Anweisungen folgen.</li>
+    <li>Claude Desktop starten → Mit Anthropic-Konto anmelden.</li>
+  </ol>
+
+  <h2>MCP-Server konfigurieren</h2>
+  <ol class="steps">
+    <li>Konfigurationsdatei öffnen:<br>
+        <code>Win+R</code> → eingeben: <code>%APPDATA%\Claude\claude_desktop_config.json</code><br>
+        (Falls die Datei nicht existiert: neu erstellen.)</li>
+    <li>Folgenden Inhalt einfügen oder ergänzen:</li>
+  </ol>
+
+  <pre>{
+  "mcpServers": {
+    "ptc-xae": {
+      "url": "http://localhost:5010/"
+    }
+  }
+}</pre>
+
+  <ol class="steps" style="counter-reset: step 2">
+    <li>Datei speichern.</li>
+    <li>Claude Desktop <strong>neu starten</strong> — der MCP-Server wird beim nächsten Start erkannt.</li>
+  </ol>
+
+  <div class="callout ok"><strong>Verbindung prüfen</strong>
+    Nach dem Neustart erscheint in Claude Desktop unten links ein Hammer-Symbol (🔨).
+    Ein Klick darauf zeigt alle verfügbaren TwinCAT-Tools — Verbindung ist aktiv.
+  </div>
+
+  <h2>Verwenden</h2>
+  <ol class="steps">
+    <li>Pneutronic-XAE-MCP-Server starten (siehe Abschnitt 0).</li>
+    <li>Claude Desktop öffnen.</li>
+    <li>Anfragen direkt im Chat-Fenster stellen — Claude verwendet die TwinCAT-Tools automatisch.</li>
+  </ol>
+
+  <h3>Beispiele</h3>
+  <pre>Zeige mir den aktuellen TwinCAT-Status.
+
+Baue das PLC-Projekt und erkläre mir die Fehler.
+
+Welche EtherCAT-Geräte sind im System vorhanden?</pre>
+
+  <div class="callout"><strong>Tipp</strong>
+    Claude Desktop eignet sich besonders gut für Endanwender ohne Programmier-Kenntnisse —
+    einfach die App öffnen und in normaler Sprache mit TwinCAT interagieren.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     2 · CLAUDE CODE
+═══════════════════════════════════════════════════════════════ -->
+<section id="claudecode" class="page-break">
+  <div class="section-heading">
+    <div class="num">2</div>
+    <h1>Claude Code <span class="badge badge-easy">Einfach</span></h1>
+  </div>
+
+  <p>Claude Code ist ein KI-Assistent von Anthropic, der direkt im Terminal läuft — ohne IDE oder Editor. Ideal für Anwender, die keinen Programmier-Editor benötigen.</p>
+
+  <h2>Voraussetzungen</h2>
+  <table>
+    <tr><th>Komponente</th><th>Version</th><th>Download</th></tr>
+    <tr><td>Node.js</td><td>18 oder neuer</td><td>https://nodejs.org</td></tr>
+    <tr><td>Claude Code</td><td>aktuell</td><td>via npm (siehe unten)</td></tr>
+    <tr><td>Anthropic-Konto</td><td>—</td><td>https://console.anthropic.com</td></tr>
+  </table>
+
+  <h2>Installation</h2>
+  <p>Terminal (PowerShell oder CMD) als normaler Benutzer öffnen:</p>
+  <pre>npm install -g @anthropic-ai/claude-code</pre>
+
+  <p>Einmalig anmelden:</p>
+  <pre>claude login</pre>
+  <p>Browser öffnet sich automatisch → Mit Anthropic-Konto anmelden → Zurück ins Terminal.</p>
+
+  <h2>Konfiguration</h2>
+  <p>Die Konfigurationsdatei <code>.mcp.json</code> im Projektordner ist bereits fertig eingerichtet. Keine weiteren Schritte nötig — Claude Code liest sie automatisch.</p>
+
+  <div class="callout"><strong>Hinweis</strong>
+    Claude Code muss aus dem Ordner gestartet werden, in dem <code>.mcp.json</code> liegt
+    (z.B. <code><repo></code>).
+  </div>
+
+  <h2>Verwenden</h2>
+  <ol class="steps">
+    <li>MCP-Server starten (siehe Abschnitt 0).</li>
+    <li>Terminal öffnen und in den Projektordner wechseln:<br><code>cd <repo></code></li>
+    <li>Claude Code starten: <code>claude</code></li>
+    <li>Fragen und Befehle in natürlicher Sprache eingeben.</li>
+  </ol>
+
+  <h3>Beispiele</h3>
+  <pre>Was ist der aktuelle TwinCAT-Status?
+
+Baue das PLC-Projekt und zeige mir alle Fehler.
+
+Erstelle eine neue Funktion "FB_Antrieb" mit den Eingängen bEnable und rSollwert.</pre>
+
+  <p>Mit <code>Ctrl+C</code> beenden.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     3 · CLAUDE CODE IN VS CODE
+═══════════════════════════════════════════════════════════════ -->
+<section id="claudecode-vscode" class="page-break">
+  <div class="section-heading">
+    <div class="num">3</div>
+    <h1>Claude Code in VS Code <span class="badge badge-easy">Einfach</span></h1>
+  </div>
+
+  <p>Die Claude Code Extension für VS Code bringt denselben KI-Assistenten wie die CLI direkt in den Editor — inklusive MCP-Tool-Unterstützung.</p>
+
+  <h2>Voraussetzungen</h2>
+  <table>
+    <tr><th>Komponente</th><th>Anforderung</th></tr>
+    <tr><td>VS Code</td><td>1.90 oder neuer</td></tr>
+    <tr><td>Node.js</td><td>18 oder neuer</td></tr>
+    <tr><td>Anthropic-Konto</td><td>https://console.anthropic.com</td></tr>
+  </table>
+
+  <h2>Extension installieren</h2>
+  <ol class="steps">
+    <li>VS Code öffnen → Extensions (<code>Ctrl+Shift+X</code>).</li>
+    <li>Suchen: <strong>Claude Code</strong> (Herausgeber: Anthropic).</li>
+    <li><strong>Install</strong> klicken.</li>
+    <li>Nach der Installation: <code>Ctrl+Shift+P</code> → <strong>Claude: Login</strong> → Browser öffnet sich → Anthropic-Konto verwenden.</li>
+  </ol>
+
+  <h2>MCP-Server konfigurieren</h2>
+  <p>Die Datei <code>.mcp.json</code> im Projektordner wird von der Extension automatisch erkannt. Kein zusätzlicher Schritt nötig.</p>
+
+  <div class="callout ok"><strong>Sofort einsatzbereit</strong>
+    Sobald der MCP-Server läuft und das Projekt geöffnet ist, stehen alle TwinCAT-Tools
+    im Claude-Chat zur Verfügung.
+  </div>
+
+  <h2>Verwenden</h2>
+  <ol class="steps">
+    <li>MCP-Server starten (siehe Abschnitt 0).</li>
+    <li>Projektordner in VS Code öffnen (<code>File → Open Folder</code>).</li>
+    <li>Claude Code Panel öffnen: Seitenleiste → Claude-Symbol (oder <code>Ctrl+Shift+P</code> → <strong>Claude: Open Chat</strong>).</li>
+    <li>Anfragen in natürlicher Sprache stellen.</li>
+  </ol>
+
+  <h3>Beispiele</h3>
+  <pre>Zeige mir alle verfügbaren TwinCAT-Tools.
+
+Aktiviere die Konfiguration und logge dich in die PLC ein.
+
+Lese den aktuellen Wert der ADS-Variable "MAIN.nCounter".</pre>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     4 · CLAUDE IN TWINCAT XAE
+═══════════════════════════════════════════════════════════════ -->
+<section id="claude-xae" class="page-break">
+  <div class="section-heading">
+    <div class="num">4</div>
+    <h1>Claude in TwinCAT XAE <span class="badge badge-easy">Einfach</span></h1>
+  </div>
+
+  <p>Claude Desktop läuft parallel zu TwinCAT XAE auf demselben Windows-PC. Über den MCP-Server kommuniziert Claude direkt mit der TwinCAT-Laufzeitumgebung — der Ingenieur arbeitet in XAE, Claude übernimmt auf Anfrage Aufgaben oder gibt Auskunft.</p>
+
+  <div class="callout ok"><strong>Kein Plugin nötig</strong>
+    Es ist keine Installation in TwinCAT XAE selbst erforderlich. Claude Desktop und
+    TwinCAT XAE laufen nebeneinander — der MCP-Server verbindet die beiden.
+  </div>
+
+  <h2>Voraussetzungen</h2>
+  <table>
+    <tr><th>Komponente</th><th>Anforderung</th></tr>
+    <tr><td>Claude Desktop</td><td>Installiert und eingerichtet (siehe Abschnitt 1)</td></tr>
+    <tr><td>Pneutronic XAE MCP</td><td>Installiert und gestartet (siehe Abschnitt 0)</td></tr>
+    <tr><td>TwinCAT XAE</td><td>3.1.4024 oder neuer, Projekt geöffnet</td></tr>
+  </table>
+
+  <h2>Arbeitsumgebung einrichten</h2>
+  <ol class="steps">
+    <li>TwinCAT XAE mit dem gewünschten Projekt öffnen.</li>
+    <li>Pneutronic-XAE-MCP-Server starten (Autostart empfohlen, siehe Abschnitt 0).</li>
+    <li>Claude Desktop öffnen — Hammer-Symbol bestätigt die aktive Verbindung.</li>
+    <li>Fenster nebeneinander anordnen: TwinCAT XAE links, Claude Desktop rechts.</li>
+  </ol>
+
+  <h2>Typische Arbeitsabläufe</h2>
+
+  <h3>Projekt analysieren</h3>
+  <pre>Welche POUs sind im aktuellen Projekt vorhanden?
+
+Zeige mir alle Variablen in der GVL_Parameter.
+
+Welche EtherCAT-Geräte sind konfiguriert und wie ist ihre Topologie?</pre>
+
+  <h3>Aufgaben delegieren</h3>
+  <pre>Füge in FB_Antrieb einen neuen Eingang "tRampzeit" vom Typ TIME hinzu.
+
+Baue das PLC-Projekt und erkläre mir die Fehler in einfachen Worten.
+
+Erstelle eine neue GVL "GVL_Sollwerte" mit fünf REAL-Variablen.</pre>
+
+  <h3>Inbetriebnahme unterstützen</h3>
+  <pre>Aktiviere die TwinCAT-Konfiguration und starte die PLC.
+
+Lese den aktuellen Wert von MAIN.rIstposition und vergleiche ihn mit dem Sollwert.
+
+Welche Fehler stehen aktuell im Event Logger?</pre>
+
+  <h2>Empfohlene Bildschirmaufteilung</h2>
+  <p>Mit dem Windows Snap-Feature (<code>Win+←</code> / <code>Win+→</code>) lassen sich TwinCAT XAE und Claude Desktop bequem nebeneinander anordnen:</p>
+  <table>
+    <tr><th>Linke Hälfte</th><th>Rechte Hälfte</th></tr>
+    <tr><td>TwinCAT XAE — Projektbaum, Editor, Diagnose</td><td>Claude Desktop — Chat mit TwinCAT-Zugriff</td></tr>
+  </table>
+
+  <div class="callout"><strong>Tipp: Kontext mitgeben</strong>
+    Claude sieht den aktuellen Zustand über den MCP-Server automatisch. Für Code-Fragen
+    hilft es, den relevanten ST-Code direkt in den Chat einzufügen — dann kann Claude
+    ihn erklären, überarbeiten oder auf Fehler prüfen.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     5 · TWINCAT XAE SHELL (COPILOT)
+═══════════════════════════════════════════════════════════════ -->
+<section id="copilot-xae" class="page-break">
+  <div class="section-heading">
+    <div class="num">5</div>
+    <h1>GitHub Copilot in TwinCAT XAE Shell <span class="badge badge-med">Mittel</span></h1>
+  </div>
+
+  <p>TwinCAT XAE basiert auf Visual Studio 2022. Ab Version 17.13 unterstützt GitHub Copilot Chat lokale MCP-Server — damit lässt sich der Pneutronic XAE MCP direkt aus der TwinCAT-Entwicklungsumgebung heraus verwenden.</p>
+
+  <h2>Voraussetzungen</h2>
+  <table>
+    <tr><th>Komponente</th><th>Anforderung</th></tr>
+    <tr><td>TwinCAT XAE / Visual Studio 2022</td><td>Version 17.13 oder neuer</td></tr>
+    <tr><td>GitHub Copilot Lizenz</td><td>Individual, Business oder Enterprise</td></tr>
+    <tr><td>GitHub Copilot Extension</td><td>In VS installiert (siehe unten)</td></tr>
+  </table>
+
+  <h2>GitHub Copilot Extension installieren</h2>
+  <p>Falls Copilot noch nicht in TwinCAT XAE vorhanden ist:</p>
+  <ol class="steps">
+    <li><strong>Visual Studio Installer</strong> öffnen (Startmenü → „Visual Studio Installer").</li>
+    <li>Bei der TwinCAT-/VS-Installation auf <strong>Ändern</strong> klicken.</li>
+    <li>Tab <em>Einzelne Komponenten</em> → Suchfeld: <code>GitHub Copilot</code>.</li>
+    <li>Komponente <strong>GitHub Copilot</strong> anhaken → <strong>Ändern</strong> klicken.</li>
+    <li>Nach der Installation Visual Studio neu starten.</li>
+  </ol>
+
+  <h2>Bei GitHub anmelden</h2>
+  <ol class="steps">
+    <li>In Visual Studio: <strong>Extras → GitHub Copilot → Bei GitHub anmelden</strong>.</li>
+    <li>Browser öffnet sich → GitHub-Konto mit Copilot-Lizenz verwenden.</li>
+    <li>Nach Bestätigung zurück in Visual Studio — Copilot-Symbol erscheint in der Statusleiste.</li>
+  </ol>
+
+  <h2>MCP-Server konfigurieren</h2>
+  <ol class="steps">
+    <li><strong>Extras → Optionen</strong> öffnen.</li>
+    <li>Navigieren zu <strong>GitHub → Copilot → MCP-Server</strong>.</li>
+    <li><strong>Hinzufügen</strong> klicken und folgende Werte eintragen:</li>
+  </ol>
+
+  <table>
+    <tr><th>Feld</th><th>Wert</th></tr>
+    <tr><td>Name</td><td><code>ptc-xae</code></td></tr>
+    <tr><td>URL</td><td><code>http://localhost:5010/</code></td></tr>
+    <tr><td>Typ</td><td><code>HTTP</code></td></tr>
+  </table>
+
+  <ol class="steps" style="counter-reset: step 3">
+    <li>Mit <strong>OK</strong> bestätigen → Visual Studio neu starten.</li>
+  </ol>
+
+  <h2>Verwenden</h2>
+  <ol class="steps">
+    <li>MCP-Server starten (siehe Abschnitt 0).</li>
+    <li>Copilot Chat öffnen: <strong>Ansicht → GitHub Copilot Chat</strong> (oder <code>Ctrl+\, Ctrl+C</code>).</li>
+    <li>Oben im Chat-Fenster den Modus <strong>Agent</strong> wählen.</li>
+    <li>Anfragen in natürlicher Sprache stellen.</li>
+  </ol>
+
+  <h3>Beispiele</h3>
+  <pre>Welche Bibliotheken sind im aktuellen PLC-Projekt eingebunden?
+
+Füge der Funktion FB_Motor einen Eingang "rDrehzahl" vom Typ REAL hinzu.
+
+Baue die Solution und liste alle Compiler-Warnungen auf.</pre>
+
+  <div class="callout warn"><strong>Hinweis zur VS-Version</strong>
+    Die MCP-Integration ist ab Visual Studio 17.13 verfügbar. Ältere Versionen zeigen den
+    Menüpunkt <em>MCP-Server</em> unter Optionen nicht an. Version prüfen:
+    <strong>Hilfe → Info</strong>.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     6 · VS CODE (COPILOT)
+═══════════════════════════════════════════════════════════════ -->
+<section id="copilot-vscode" class="page-break">
+  <div class="section-heading">
+    <div class="num">6</div>
+    <h1>GitHub Copilot in VS Code <span class="badge badge-easy">Einfach</span></h1>
+  </div>
+
+  <h2>Konfiguration (benutzerweit)</h2>
+  <ol class="steps">
+    <li><code>Ctrl+Shift+P</code> → <strong>Open User Settings (JSON)</strong>.</li>
+    <li>Folgenden Abschnitt ergänzen:</li>
+  </ol>
+  <pre>{
+  "mcp": {
+    "servers": {
+      "ptc-xae": {
+        "url": "http://localhost:5010/"
+      }
+    }
+  }
+}</pre>
+  <ol class="steps" style="counter-reset: step 2">
+    <li>Datei speichern — VS Code erkennt den Server sofort.</li>
+  </ol>
+
+  <h2>Verwenden</h2>
+  <ol class="steps">
+    <li>MCP-Server starten (siehe Abschnitt 0).</li>
+    <li>Copilot Chat öffnen: <code>Ctrl+Alt+I</code>.</li>
+    <li>Oben im Chat-Fenster den Modus <strong>Agent</strong> aktivieren.</li>
+    <li>Anfragen stellen — Tools werden automatisch verwendet.</li>
+  </ol>
+
+  <h3>Beispiele</h3>
+  <pre>Aktiviere die TwinCAT-Konfiguration und starte die PLC.
+
+Zeige mir den aktuellen Zustand aller NC-Achsen.
+
+Erstelle eine neue GVL "GVL_Parameter" mit drei REAL-Variablen.</pre>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     7 · GEMEINSAME HINWEISE
+═══════════════════════════════════════════════════════════════ -->
+<section id="hinweise">
+  <div class="section-heading">
+    <div class="num">7</div>
+    <h1>Gemeinsame Hinweise</h1>
+  </div>
+
+  <h2>Übersicht der Integrationsmöglichkeiten</h2>
+  <table class="summary-table">
+    <tr><th>Client</th><th>Aufwand</th><th>Empfehlung</th><th>Bemerkung</th></tr>
+    <tr>
+      <td>Claude Desktop (Windows)</td><td>5 Min.</td>
+      <td class="rec-yes">✓ Empfohlen</td>
+      <td>Einfachste Option, kein Terminal</td>
+    </tr>
+    <tr>
+      <td>Claude Code (CLI)</td><td>5 Min.</td>
+      <td class="rec-yes">✓ Empfohlen</td>
+      <td>Kein Editor nötig</td>
+    </tr>
+    <tr>
+      <td>Claude Code in VS Code</td><td>5 Min.</td>
+      <td class="rec-yes">✓ Empfohlen</td>
+      <td>Claude direkt im Editor</td>
+    </tr>
+    <tr>
+      <td>Claude in TwinCAT XAE</td><td>0 Min.</td>
+      <td class="rec-yes">✓ Empfohlen</td>
+      <td>Claude Desktop neben XAE</td>
+    </tr>
+    <tr>
+      <td>GitHub Copilot in VS Code</td><td>2 Min.</td>
+      <td class="rec-yes">✓ Empfohlen</td>
+      <td>Einfachste IDE-Integration</td>
+    </tr>
+    <tr>
+      <td>GitHub Copilot in TwinCAT XAE</td><td>15 Min.</td>
+      <td class="rec-yes">✓ Empfohlen</td>
+      <td>Direkt im TwinCAT-Umfeld</td>
+    </tr>
+    <tr>
+      <td>ChatGPT</td><td>Aufwändig</td>
+      <td class="rec-warn">⚠ Nur für Tests</td>
+      <td>Benötigt öffentliche URL (ngrok)</td>
+    </tr>
+    <tr>
+      <td>Microsoft Copilot 365</td><td>Sehr hoch</td>
+      <td class="rec-no">✗ Nicht empfohlen</td>
+      <td>Benötigt Azure-Hosting</td>
+    </tr>
+  </table>
+
+  <h2>Firewall</h2>
+  <p>Standardmässig hört der Server nur auf <code>localhost</code> — kein externer Zugriff möglich. Falls der Server von anderen Geräten im Netzwerk erreichbar sein soll, muss Port <code>5010</code> in der Windows-Firewall freigegeben werden (nicht empfohlen ohne VPN).</p>
+
+  <h2>Support</h2>
+  <table>
+    <tr><th>Anliegen</th><th>Kontakt</th></tr>
+    <tr><td>Technischer Support</td><td>support@pneutronic.ch</td></tr>
+    <tr><td>Website</td><td>www.pneutronic.ch</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════════════════ -->
+<footer>
+  <span>Pneutronic XAE MCP — Integrationsanleitung v1.0</span>
+  <span>© 2026 Pneutronic AG · www.pneutronic.ch</span>
+</footer>
+
+</body>
+</html>

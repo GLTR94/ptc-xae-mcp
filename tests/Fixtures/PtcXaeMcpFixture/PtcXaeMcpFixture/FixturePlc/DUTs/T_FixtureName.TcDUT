@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <DUT Name="T_FixtureName" Id="{2f7c3eb6-52a3-45f2-9733-b5ca1f8fc12d}">
+    <Declaration><![CDATA[TYPE T_FixtureName : STRING(40); END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

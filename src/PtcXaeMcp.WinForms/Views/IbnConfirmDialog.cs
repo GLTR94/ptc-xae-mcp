@@ -1,0 +1,166 @@
+using PtcXaeMcp.WinForms.TwinCat;
+
+namespace PtcXaeMcp.WinForms.Views;
+
+/// <summary>
+/// The modal confirm popup behind every IBN Live step (issue #272) — the ONLY execution path:
+/// <see cref="DialogResult.OK"/> lets the Approvals view call
+/// <see cref="IbnLiveCoordinator.ConfirmProposal"/>, anything else writes nothing.
+/// Same rules as <see cref="HmiConfirmDialog"/>: TopMost, no AcceptButton (Enter never
+/// confirms), focus on Cancel, Esc rejects. It closes itself with
+/// <see cref="DialogResult.Abort"/> when the proposal expires or stops being pending
+/// (abort, disarm, release-all), so a stale popup can never be confirmed into nothing.
+/// </summary>
+internal sealed class IbnConfirmDialog : Form
+{
+    private readonly DateTime _deadlineUtc;
+    private readonly Func<bool> _stillPending;
+    private readonly Label _lblCountdown;
+    private readonly System.Windows.Forms.Timer _timer;
+
+    /// <param name="stillPending">Polled every 250 ms on the UI thread.</param>
+    public IbnConfirmDialog(IbnProposal proposal, Func<bool> stillPending)
+    {
+        _deadlineUtc = proposal.ExpiresUtc;
+        _stillPending = stillPending;
+
+        Name = "IbnConfirmDialog";
+        Text = IbnConfirmText.Title;
+        FormBorderStyle = FormBorderStyle.FixedDialog;
+        MaximizeBox = false;
+        MinimizeBox = false;
+        StartPosition = FormStartPosition.CenterScreen;
+        TopMost = true;
+        ShowInTaskbar = true;
+        AutoSize = true;
+        AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        Padding = new Padding(16);
+
+        var layout = new TableLayoutPanel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            Dock = DockStyle.Fill,
+        };
+
+        var lblHeadline = new Label
+        {
+            Text = IbnConfirmText.Headline,
+            AutoSize = true,
+            Font = new Font(Font.FontFamily, 10.5f, FontStyle.Bold),
+            Margin = new Padding(0, 0, 0, 8),
+        };
+        var txtDetails = new TextBox
+        {
+            Name = "_txtIbnConfirmDetails",
+            Multiline = true,
+            ReadOnly = true,
+            TabStop = false,
+            Font = new Font("Consolas", 9.5f),
+            Text = IbnConfirmText.Details(proposal),
+            Size = new Size(560, 110),
+            Margin = new Padding(0, 0, 0, 8),
+        };
+        var lblEffect = new Label
+        {
+            Text = IbnConfirmText.Effect,
+            AutoSize = true,
+            MaximumSize = new Size(560, 0),
+            ForeColor = Theme.ThemeManager.Palette.Error,
+            Font = new Font(Font, FontStyle.Bold),
+            Margin = new Padding(0, 0, 0, 8),
+        };
+        _lblCountdown = new Label { AutoSize = true, Margin = new Padding(0, 0, 0, 12) };
+
+        var buttons = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            FlowDirection = FlowDirection.RightToLeft,
+            Dock = DockStyle.Fill,
+            WrapContents = false,
+            Margin = new Padding(0),
+        };
+        var btnCancel = new Button
+        {
+            Name = "_btnIbnConfirmCancel",
+            Text = "Cancel",
+            DialogResult = DialogResult.Cancel,
+            AutoSize = true,
+            MinimumSize = new Size(98, 30),
+        };
+        var btnExecute = new Button
+        {
+            Name = "_btnIbnConfirmExecute",
+            Text = "Execute step",
+            DialogResult = DialogResult.OK,
+            AutoSize = true,
+            MinimumSize = new Size(110, 30),
+        };
+        buttons.Controls.Add(btnCancel);
+        buttons.Controls.Add(btnExecute);
+
+        layout.Controls.Add(lblHeadline);
+        layout.Controls.Add(txtDetails);
+        layout.Controls.Add(lblEffect);
+        layout.Controls.Add(_lblCountdown);
+        layout.Controls.Add(buttons);
+        Controls.Add(layout);
+
+        CancelButton = btnCancel;   // Esc rejects
+        ActiveControl = btnCancel;  // no AcceptButton: Enter never confirms
+
+        Theme.ThemeManager.ApplyDialog(this);
+        _lblCountdown.ForeColor = Theme.ThemeManager.Palette.TextMuted; // Apply resets plain labels to Text
+
+        _timer = new System.Windows.Forms.Timer { Interval = 250 };
+        _timer.Tick += (_, _) => Tick();
+        Shown += (_, _) =>
+        {
+            Activate();
+            System.Media.SystemSounds.Exclamation.Play();
+            Tick();
+            _timer.Start();
+        };
+        FormClosed += (_, _) => _timer.Dispose();
+    }
+
+    private void Tick()
+    {
+        TimeSpan left = _deadlineUtc - DateTime.UtcNow;
+        bool pending;
+        try { pending = _stillPending(); }
+        catch { pending = false; } // cannot tell — close rather than offer a confirm
+
+        if (left <= TimeSpan.Zero || !pending)
+        {
+            _timer.Stop();
+            DialogResult = DialogResult.Abort; // closes the modal dialog; the caller writes nothing
+            return;
+        }
+        _lblCountdown.Text = IbnConfirmText.Countdown(left);
+    }
+}
+
+/// <summary>Popup text, kept out of the Form so it is unit-testable.</summary>
+internal static class IbnConfirmText
+{
+    public const string Title = "IBN Live — confirm step";
+
+    public const string Headline = "The MCP client proposes a commissioning step";
+
+    public const string Effect =
+        "⚠ Execute writes ONE command bit (bStepReq) to the test PRG — the machine may MOVE. " +
+        "Cancel, Esc or closing this window writes nothing.";
+
+    public static string Details(IbnProposal p) => string.Join(Environment.NewLine,
+        $"Action    : {p.Action}",
+        $"Chain     : {p.ChainId ?? "-"}",
+        $"Actuator  : {p.ActuatorId ?? "-"}",
+        $"Proposal  : {p.ProposalId}",
+        $"Requested : {p.CreatedUtc.ToLocalTime():HH:mm:ss}");
+
+    public static string Countdown(TimeSpan left) =>
+        $"Nothing moves without your confirmation — this proposal expires in {Math.Ceiling(left.TotalSeconds):0} s.";
+}

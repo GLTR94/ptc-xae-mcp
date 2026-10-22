@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Pneutronic XAE MCP app icon: "PTC" in grey on white with the red bar over the C,
+       as above the C of the PNEUTRONIC word mark. Letters are geometry, not a font.
+       favicon.ico is generated from the same numbers by tools/gen_app_icon.ps1. -->
+  <rect x="10" y="10" width="236" height="236" rx="50" fill="#FFFFFF" stroke="#C9CBCE" stroke-width="4"/>
+  <rect x="168" y="78" width="53" height="12" fill="#D2122E"/>
+  <g fill="#6E7073">
+    <!-- P -->
+    <path fill-rule="evenodd" d="M34,98 H75 A22,22 0 0 1 75,142 H50 V158 H34 Z M50,114 H75 A6,6 0 0 1 75,126 H50 Z"/>
+    <!-- T -->
+    <path d="M106,98 H159 V114 H140.5 V158 H124.5 V114 H106 Z"/>
+    <!-- C: ring segment, centre (198,128), radii 30/14, open +-40 degrees to the right -->
+    <path d="M220.98,108.72 A30,30 0 1 0 220.98,147.28 L208.72,137 A14,14 0 1 1 208.72,119 Z"/>
+  </g>
+</svg>

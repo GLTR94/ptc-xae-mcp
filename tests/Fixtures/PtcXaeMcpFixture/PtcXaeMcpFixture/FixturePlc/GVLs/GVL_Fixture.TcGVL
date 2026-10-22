@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <GVL Name="GVL_Fixture" Id="{7a37ae27-a581-4317-a77f-629d6dddcc26}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	bEnable : BOOL;
+	bInputSignal AT %I* : BOOL;
+	nCount : UINT := 2;
+	nCycleCount : UDINT;
+	fValue : LREAL := 1.5;
+	sText : STRING := 'fixture';
+	aNames : ARRAY[0..3] OF STRING(20) := ['alpha', 'beta', 'gamma', 'delta'];
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <GVL Name="GVL_IBN_Probe" Id="{b09df2f0-d3b6-40d1-ad39-cc21bd29e783}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	bEnable : BOOL; // heartbeat: TRUE while armed, FALSE on disarm/abort/release_all
+	bStepReq : BOOL; // the single command bit, written only by a human-confirmed proposal
+	bAbort : BOOL; // panic/home: TRUE on disarm/abort/release_all
+	bChainRunning : BOOL; // status read by twincat_list_active_chains
+	nActiveChain : INT;
+	nCurrentStep : INT;
+	bFault : BOOL;
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

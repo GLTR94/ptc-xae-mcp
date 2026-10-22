@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <DUT Name="E_FixtureMode" Id="{2f9c0684-a782-4895-9af2-c42f272e15ac}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'strict'}
+TYPE E_FixtureMode :
+(
+	Idle := 0,
+	Running := 1,
+	Done := 2
+) INT;
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

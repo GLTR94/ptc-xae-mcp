@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="MAIN" Id="{dd9c3f19-668f-441e-a1de-d526f4df88b0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	fbStepChain : FB_StepChain;
+	stRecord : ST_FixtureRecord;
+	eMode : E_FixtureMode;
+	sName : T_FixtureName := 'fixture';
+	bInput : BOOL;
+	sFirstName : STRING(20);
+	bIbnProbeIdle : BOOL;
+	fInstanceProbe : LREAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbStepChain(bStart := GVL_Fixture.bEnable);
+GVL_Fixture.nCycleCount := GVL_Fixture.nCycleCount + 1;
+GVL_Fixture.fValue := GVL_Fixture.fValue + 0.001;
+bInput := GVL_Fixture.bInputSignal;
+sFirstName := GVL_Fixture.aNames[0];
+stRecord.nId := GVL_Fixture.nCount;
+stRecord.fValue := GVL_Fixture.fValue;
+stRecord.sLabel := GVL_Fixture.sText;
+stRecord.eMode := eMode;
+
+// IbnLive probe: only read here, so every GVL_IBN_Probe symbol stays in the ADS symbol table.
+bIbnProbeIdle := NOT (GVL_IBN_Probe.bEnable OR GVL_IBN_Probe.bStepReq OR GVL_IBN_Probe.bAbort
+	OR GVL_IBN_Probe.bChainRunning OR GVL_IBN_Probe.bFault)
+	AND GVL_IBN_Probe.nActiveChain = 0 AND GVL_IBN_Probe.nCurrentStep = 0;
+
+// plc-instance-settings: only read here, so the init symbols and the retain variable stay in the image.
+fInstanceProbe := GVL_InstanceSettings.fInitGain * DINT_TO_LREAL(GVL_InstanceSettings.nInitParam)
+	+ UDINT_TO_LREAL(GVL_InstanceSettings.nRetainCounter);
+
+PRG_IntegrationScratch(); // [INTEGRATION-TEST-HOOK] do not remove manually
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="PRG_IntegrationScratch" Id="{2f32e079-63f9-4f56-9535-520b675581a8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PRG_IntegrationScratch
+VAR
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[; // integration-test scratch POU. Body is freely overwritten and restored by the live test suite. Never put real logic here.]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

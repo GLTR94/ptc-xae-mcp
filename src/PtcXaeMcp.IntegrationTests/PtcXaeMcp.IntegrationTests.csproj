@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <!-- Pinned to 7.2.2: last Apache-2.0 (free) release. 8.x requires a paid commercial license. -->
+    <PackageReference Include="FluentAssertions" Version="7.2.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="ModelContextProtocol" Version="1.4.1" />
+    <PackageReference Include="ModelContextProtocol.Core" Version="1.4.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <!-- [SkippableFact] honors a thrown Xunit.SkipException as a *skipped*
+         result; xunit 2.9.3's own execution engine does not act on the
+         dynamic-skip token, so this is how not-ready live tests skip offline. -->
+    <PackageReference Include="Xunit.SkippableFact" Version="1.5.85" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <!-- Issue #195: the runtime stage reads the explicit runtime target's ADS state (port 10000) itself,
+         only to decide whether the named user-mode runtime has to be started (AdsStateProbe.cs).
+         Same version as the host (PtcXaeMcp.WinForms). -->
+    <PackageReference Include="Beckhoff.TwinCAT.Ads" Version="7.0.389" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="FluentAssertions" />
+  </ItemGroup>
+
+</Project>

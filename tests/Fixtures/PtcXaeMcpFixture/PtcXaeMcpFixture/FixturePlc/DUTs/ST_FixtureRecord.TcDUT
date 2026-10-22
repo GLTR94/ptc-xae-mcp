@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <DUT Name="ST_FixtureRecord" Id="{7253c2e2-06b0-4455-8b6b-2a9ddef35223}">
+    <Declaration><![CDATA[TYPE ST_FixtureRecord :
+STRUCT
+	nId : UDINT;
+	fValue : LREAL;
+	sLabel : STRING(40);
+	eMode : E_FixtureMode;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

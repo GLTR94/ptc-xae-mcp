@@ -1,0 +1,67 @@
+name: Bug report
+description: Something the server, a tool or the GUI does wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The server drives a real TwinCAT XAE, so the exact environment matters.
+        Please remove customer names, project numbers and internal network details from logs and paths.
+  - type: input
+    id: version
+    attributes:
+      label: ptc-xae-mcp version
+      description: From the window title or `GET http://localhost:5010/health`.
+      placeholder: "1.4.0 (a18e9d2)"
+    validations:
+      required: true
+  - type: input
+    id: twincat
+    attributes:
+      label: TwinCAT XAE build
+      placeholder: "3.1.4026.22"
+    validations:
+      required: true
+  - type: checkboxes
+    id: functions
+    attributes:
+      label: Installed TwinCAT functions involved
+      options:
+        - label: TE130x Scope View
+        - label: TE2000 HMI Engineering
+        - label: TwinSAFE / TE9000
+        - label: User-mode runtime (TC170x)
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: "Claude Code 2.x / other"
+  - type: input
+    id: tool
+    attributes:
+      label: Tool or GUI action
+      placeholder: "twincat_plc_write"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Include the exact tool result (`[Error] …`) if there was one.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Ideally against the neutral fixture `tests/Fixtures/PtcXaeMcpFixture`.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log excerpt
+      description: Relevant lines from `%LOCALAPPDATA%\ptc-xae-mcp\host-*.log` and `activity-*.log`.
+      render: text

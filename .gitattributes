@@ -1,0 +1,11 @@
+# Git hooks and shell scripts must keep LF endings so they run on macOS/Linux
+# (a CRLF-terminated #!/bin/sh script fails to execute on those platforms).
+.githooks/** text eol=lf
+*.sh text eol=lf
+
+# Captured Beckhoff/TwinSAFE editor files: keep them byte-for-byte (BOM + CRLF) — tests compare against them.
+src/PtcXaeMcp.Tests/Fixtures/Safety/** -text
+
+# Neutral HMI fixture (tests/Fixtures/create_hmi_fixture.py): byte-for-byte as generated (BOMs, CRLF/LF mix of the
+# Beckhoff template), so re-running the script leaves `git status` clean.
+tests/Fixtures/PtcXaeMcpHmiFixture/** -text

@@ -1,0 +1,52 @@
+name: CI
+
+# Restores the CI signal issue #157 (item 5) asked for: build + unit test on every push/PR.
+# windows-latest is required — this is a WinForms host with a WPF UIAutomation dependency
+# (see the UseWPF comment in PtcXaeMcp.WinForms.csproj), so it cannot build on ubuntu/macOS
+# runners. -p:TwinCat=false is the compile seam documented in that same csproj: the hosted
+# runner has no TwinCAT install, so the Beckhoff-DLL-backed COM partials fall back to
+# PlatformNotSupportedException stubs instead of failing to compile. Only PtcXaeMcp.Tests
+# (pure unit tests — no running exe, no XAE) runs here; PtcXaeMcp.McpTests and
+# PtcXaeMcp.IntegrationTests need a live server/TwinCAT and are exercised by the live suite (CONTRIBUTING.md), not CI.
+#
+# Actions are pinned to commit SHAs (the tag is kept as a comment for readability); Dependabot
+# (.github/dependabot.yml) proposes the bumps.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  # Manual start (Actions tab, "Run workflow"), e.g. to re-run CI on master without a commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore src/PtcXaeMcp.WinForms/ptc-xae-mcp.sln -p:TwinCat=false
+
+      - name: Build (Release, TwinCat=false)
+        run: dotnet build src/PtcXaeMcp.WinForms/ptc-xae-mcp.sln -c Release -p:TwinCat=false
+
+      - name: Unit tests (PtcXaeMcp.Tests, TwinCat=false)
+        run: dotnet test src/PtcXaeMcp.Tests -p:TwinCat=false --no-build -c Release --logger "trx;LogFileName=test-results.trx"
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-results
+          path: "**/test-results.trx"

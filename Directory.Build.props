@@ -1,0 +1,107 @@
+<Project>
+
+  <!-- Solution-wide build governance. Applies to every project under the repo root
+       (src/PtcXaeMcp.* — the WinForms host and the four test projects).
+
+       Goal: surface the latent defect classes the codebase audit flagged (CS86xx
+       nullable, CAxxxx correctness/reliability analyzers) instead of letting them
+       compile silently. Phase 1 = inventory: analyzers ON, warnings NOT yet fatal.
+       Once the warning inventory is triaged, flip TreatWarningsAsErrors per family
+       (see the staged-rollout block at the bottom). -->
+
+  <PropertyGroup>
+    <!-- Single source of truth for the release version (issue #157 item 3). The SDK
+         propagates this into AssemblyVersion/FileVersion/InformationalVersion for every
+         project under the repo root, so McpBridge's ServerInfo.Version and the /health
+         endpoint (both read via McpBridge.ThisAssemblyVersion(), which reads the
+         InformationalVersion attribute) and the setup installer (setup/setup.iss, given
+         explicitly via `/DAppVersion=1.3.0` — see setup/setup.iss for the publish command)
+         all report the same number. Bump this single value on release; nothing else needs
+         to change. -->
+    <Version>2.1.0</Version>
+
+    <!-- Display name in the exe's file properties; technical names (exe, folders) stay ptc-xae-mcp. -->
+    <Product>Pneutronic XAE MCP</Product>
+    <Company>Pneutronic AG</Company>
+
+    <!-- Centralized so the per-project copies (already in all 5 csproj) inherit one source. -->
+    <Nullable>enable</Nullable>
+
+    <!-- .NET analyzers are on by default for net5+, but make it explicit and lift the
+         analysis level so reliability/correctness rules (CA2xxx) actually report. -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+
+    <!-- Surface the full picture during inventory: report all warnings, don't cap. -->
+    <WarningLevel>9999</WarningLevel>
+
+    <!-- Phase 1: keep the build green so we get a COMPLETE warning list rather than a
+         hard stop. Do NOT set TreatWarningsAsErrors=true here yet. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- ============================================================================
+       STAGED ROLLOUT (enable after the inventory is triaged):
+
+       Step 1: promote the highest-value nullable family to errors first.
+         PropertyGroup with:
+           WarningsAsErrors = CS8600;CS8602;CS8603;CS8604;CS8625;CS8629
+
+       Step 2: once those are clean, flip everything and exempt the rest until fixed.
+         PropertyGroup with:
+           TreatWarningsAsErrors = true
+           WarningsNotAsErrors   = (families still being worked, e.g. CA1822;CA1310)
+       ============================================================================ -->
+
+  <!-- CA1304/CA1305/CA1310 are fixed to zero in every project of the solution (issue #157
+       item 6 — see CONTRIBUTING.md for the culture rule these fixes follow; the test
+       projects followed in the last #157 pass) and promoted to build errors everywhere. -->
+  <PropertyGroup>
+    <WarningsAsErrors>$(WarningsAsErrors);CA1304;CA1305;CA1310</WarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- ============================================================================
+       ANALYZER WARNING BUDGET (issue #157 item 6) — PtcXaeMcp.WinForms only (the
+       production project; test-project counts, e.g. CA1707 on underscore-named
+       [Fact]s, are expected and out of scope here), from `dotnet test
+       src/PtcXaeMcp.Tests` build output on 2026-09-27 (chore/release-polish-4 —
+       CA1305 (193→0) and CA1310 (3→0) are now fixed and promoted to
+       WarningsAsErrors above; every other count is unchanged from
+       chore/release-polish-3):
+
+          16  CA2249  string.IndexOf/StartsWith could use string.Contains
+          14  CA1859  use the concrete type instead of the interface for a
+                       COM/interop-typed field/variable (perf)
+          13  CA1507  use nameof() instead of a string literal
+           8  CA1838  avoid StringBuilder in P/Invoke signatures
+           8  CA1822  member does not access instance data, could be static
+           7  CA1869  reuse a cached JsonSerializerOptions instance
+           4  CA1862  case-insensitive string comparison via ToLower/ToUpper
+           3  CA2263  use the generic GetService<T>()/Enum.Parse<T>() overload
+           3  CA1865  use a char overload instead of a single-char string
+           3  CA1861  hoist a repeated constant array literal
+           2  CA1068  CancellationToken parameter should be the last parameter
+           1  CA2201  reserved exception type (OutOfMemoryException et al.) thrown
+                       directly
+           1  CA1870  hoist a repeated SearchValues<char> literal
+           1  CA1846  use span-based StringBuilder.Append overload
+           1  CA1845  use string.Concat(span) instead of "a" + b + "c"
+           1  CA1510  ArgumentNullException.ThrowIfNull(...) instead of a manual null-check throw
+
+       Already fixed in earlier passes (no longer in the count above): CA1304 (the last
+       site, ComMemberProbe.InvokeNoArgs, passes InvariantCulture; promoted with CA1305/CA1310),
+       CA1001 (McpBridge
+       now implements IDisposable), CA2101 (Win32DialogAutomation.SendMessage's string
+       overload now marshals CharSet.Unicode), all 10 CA1806 sites (ignored P/Invoke/
+       TryParse return values, now explicit discards), CS0618 (TwinCatComSession.
+       AdsVariable.cs now calls RpcMethodExtension.IsVoid(method) instead of the obsolete
+       IRpcMethod.IsVoid property), and the culture-dependent DateTime.TryParse in
+       LicenseInfoParser.ParseDate (B-19, now InvariantCulture).
+
+       Do NOT flip TreatWarningsAsErrors while this list is non-empty — see the staged
+       rollout above. CA1304/CA1305/CA1310 are the only families promoted so far; every
+       other rule above remains a warning until its own dedicated pass.
+       ============================================================================ -->
+
+</Project>

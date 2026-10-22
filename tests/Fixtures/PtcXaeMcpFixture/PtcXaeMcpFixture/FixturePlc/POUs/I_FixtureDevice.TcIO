@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <Itf Name="I_FixtureDevice" Id="{c02bec33-8a03-40cd-be22-7cfa07d56327}">
+    <Declaration><![CDATA[INTERFACE I_FixtureDevice
+]]></Declaration>
+    <Method Name="Reset" Id="{f72165a0-e4d0-4e8c-b08d-702c655ed0e0}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR]]></Declaration>
+    </Method>
+  </Itf>
+</TcPlcObject>

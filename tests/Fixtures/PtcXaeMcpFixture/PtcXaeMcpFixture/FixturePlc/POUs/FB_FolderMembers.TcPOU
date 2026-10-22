@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_FolderMembers" Id="{04d45a1f-b0f0-4187-8258-5f6be033085c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FolderMembers
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Folder Name="Members" Id="{7a43fc69-0569-41f5-b411-581f69e5d375}" />
+    <Property Name="Enabled" Id="{7b8e93e3-8545-4177-ac94-4092230dbcc1}" FolderPath="Members\">
+      <Declaration><![CDATA[PROPERTY PUBLIC Enabled : BOOL]]></Declaration>
+      <Get Name="Get" Id="{4f9fa19b-92c3-4bff-a0f3-83d07b220bf7}">
+        <Declaration><![CDATA[PUBLIC
+VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{4cf05f55-cfa6-43a1-b1d8-e455b26dd596}">
+        <Declaration><![CDATA[PUBLIC
+VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="Reset" Id="{b53af92c-60bb-48c4-aaa2-8bfb7cf4bdfc}" FolderPath="Members\">
+      <Declaration><![CDATA[METHOD Reset : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

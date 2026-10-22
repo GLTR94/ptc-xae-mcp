@@ -1,0 +1,33 @@
+version: 2
+# Quiet by design: at most one grouped pull request per ecosystem and kind per month.
+# Major updates come in their own group because they are the ones that can break the
+# build or the tests; minor and patch updates are bundled.
+updates:
+  - package-ecosystem: "nuget"
+    # The solution file lives here and references every project.
+    directory: "/src/PtcXaeMcp.WinForms"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      nuget-minor-and-patch:
+        update-types: ["minor", "patch"]
+      nuget-major:
+        update-types: ["major"]
+    ignore:
+      # FluentAssertions 8.x is commercially licensed (Xceed); 7.x is the last Apache-2.0 line.
+      - dependency-name: "FluentAssertions"
+        versions: [">=8.0.0"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      github-actions:
+        patterns: ["*"]
