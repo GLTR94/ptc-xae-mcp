@@ -55,6 +55,9 @@ internal sealed partial class TwinCatComSession
     public InspectFbInstanceResult InspectFbInstance(string instancePath, string? amsNetId, int adsPort)
         => new(false, instancePath, null, Array.Empty<FbMemberEntry>(), Array.Empty<FbRpcMethodEntry>(),
             amsNetId ?? "local", adsPort, TwinCatNotBuilt.Message);
+
+    // Without the ADS library nothing reads a target, so there is no project target to resolve.
+    private static string? ProjectTargetNetIdOrNull() => null;
 #else
 
     private static readonly TimeSpan AdsTimeout = TimeSpan.FromSeconds(10);
@@ -631,7 +634,11 @@ internal sealed partial class TwinCatComSession
             string? dir = sln is null ? null : Path.GetDirectoryName(sln);
             if (string.IsNullOrEmpty(dir)) return null;
 
-            foreach (var tsproj in Directory.EnumerateFiles(dir, "*.tsproj", SearchOption.AllDirectories))
+            // A .tsproj opened directly sits in a generated wrapper solution elsewhere, so the solution's
+            // own projects are asked for their paths as well.
+            var candidates = Directory.EnumerateFiles(dir, "*.tsproj", SearchOption.AllDirectories)
+                .Concat(SolutionTsprojPaths()).Distinct(StringComparer.OrdinalIgnoreCase);
+            foreach (var tsproj in candidates)
             {
                 var doc = System.Xml.Linq.XDocument.Load(tsproj);
                 var attr = doc.Root?.Element("Project")?.Attribute("TargetNetId")
@@ -642,6 +649,24 @@ internal sealed partial class TwinCatComSession
         }
         catch (Exception comEx) when (ComCall.NotBusy(comEx)) { }
         return null;
+    }
+
+    private static List<string> SolutionTsprojPaths()
+    {
+        var paths = new List<string>();
+        try
+        {
+            dynamic projects = GetActiveTcDte().Solution.Projects;
+            int count = ComCall.ReadProp(() => (int)projects.Count, 0);
+            for (int i = 1; i <= count; i++)
+            {
+                string? path = ComCall.ReadProp<string?>(() => (string?)projects.Item(i).FullName, null);
+                if (path is not null && path.EndsWith(".tsproj", StringComparison.OrdinalIgnoreCase) && File.Exists(path))
+                    paths.Add(path);
+            }
+        }
+        catch (Exception comEx) when (ComCall.NotBusy(comEx)) { }
+        return paths;
     }
 
     private static (ISymbol? sym, string? error) LoadSymbol(AdsClient client, string symbolPath)
